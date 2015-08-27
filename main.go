@@ -8,44 +8,37 @@ import (
 )
 
 type userConfig struct {
-	port     int
-	address  string
+	username string
 	password string
-	base_dn  string
 }
 
-func NewUser(port int, address string, password string, base_dn string) *userConfig {
-	user := new(userConfig)
-	user.address = address
-	user.port = port
-	user.password = password
-	user.base_dn = base_dn
-
-	return user
+type ldapConfig struct {
+	base_dn string
+	port    int
+	address string
 }
 
-func Bind(user *userConfig) error {
-	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", user.address, user.port))
+func (l *ldapConfig) Bind(user *userConfig) (*ldap.Conn, error) {
+	conn, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", l.address, l.port))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer l.Close()
+	defer conn.Close()
 
-	err = l.Bind(user.base_dn, user.password)
+	err = conn.Bind(l.base_dn, user.password)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return conn, nil
 }
 
 func main() {
-	user := &userConfig{389,
-		"1.2.3.4",
-		"EderBaitola",
-		"uid=eder,ou=muito,dc=baitola,dc=com"}
 
-	err := Bind(user)
+	user := &userConfig{"paulo", "!Gr4zz13ll4!"}
+	l := &ldapConfig{"base_dn", 389, "127.0.0.1"}
+
+	_, err := l.Bind(user)
 	if err != nil {
 		log.Fatal(err)
 	}
