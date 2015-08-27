@@ -35,7 +35,7 @@ func (l *ldapConfig) Bind(user *userConfig) (*ldap.Conn, error) {
 
 func main() {
 
-	user := &userConfig{"paulo", "!Gr4zz13ll4!"}
+	user := &userConfig{"eder", "EderBaitola"}
 	l := &ldapConfig{"base_dn", 389, "127.0.0.1"}
 
 	_, err := l.Bind(user)
