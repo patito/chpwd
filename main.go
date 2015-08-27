@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-    "log"
+	"log"
 
-    "github.com/go-ldap/ldap"
+	"github.com/go-ldap/ldap"
 )
 
 type userConfig struct {
@@ -33,10 +33,10 @@ func Bind(user *userConfig) error {
 
 	err = l.Bind(user.base_dn, user.password)
 	if err != nil {
-	    return err
+		return err
 	}
 
-    return nil
+	return nil
 }
 
 func main() {
@@ -45,8 +45,8 @@ func main() {
 		"EderBaitola",
 		"uid=eder,ou=muito,dc=baitola,dc=com"}
 
-    err := Bind(user)
-    if err != nil {
-        log.Fatal(err)
-    }
+	err := Bind(user)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
