@@ -23,7 +23,6 @@ func (l *ldapConfig) Bind(user *userConfig) (*ldap.Conn, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
 
 	err = conn.Bind(l.base_dn, user.password)
 	if err != nil {
@@ -33,13 +32,31 @@ func (l *ldapConfig) Bind(user *userConfig) (*ldap.Conn, error) {
 	return conn, nil
 }
 
+func (l *ldapConfig) ChangePassword(conn *ldap.Conn, user *userConfig, newpwd string) error {
+
+	passwordModifyRequest := ldap.NewPasswordModifyRequest("", user.password, newpwd)
+	_, err := conn.PasswordModify(passwordModifyRequest)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func main() {
 
-	user := &userConfig{"eder", "EderBaitola"}
-	l := &ldapConfig{"base_dn", 389, "127.0.0.1"}
+    user := &userConfig{"eder", "EderBaitola"}
+    l := &ldapConfig{"base_dn", 389, "127.0.0.1"}
 
-	_, err := l.Bind(user)
+	conn, err := l.Bind(user)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	err = l.ChangePassword(conn, user, "xuxa")
+	if err != nil {
+		log.Fatal(err)
+	}
+	conn.Close()
 }
