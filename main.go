@@ -2,41 +2,44 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"log"
+	"net/http"
+	"path/filepath"
 
 	"github.com/go-ldap/ldap"
 )
 
 type userConfig struct {
-	username string
-	password string
+	username        string
+	password        string
+	newPassword     string
+	confirmPassword string
 }
 
 type ldapConfig struct {
-	base_dn string
+	baseDN  string
 	port    int
 	address string
 }
 
-func (l *ldapConfig) Bind(user *userConfig) (*ldap.Conn, error) {
+func changeLdapPassword(user *userConfig) error {
+
+	l := &ldapConfig{"base_dn", 389, "127.0.0.1"}
+
 	conn, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", l.address, l.port))
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	err = conn.Bind(l.base_dn, user.password)
+	err = conn.Bind(l.baseDN, user.password)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	defer conn.Close()
 
-	return conn, nil
-}
-
-func (l *ldapConfig) ChangePassword(conn *ldap.Conn, user *userConfig, newpwd string) error {
-
-	passwordModifyRequest := ldap.NewPasswordModifyRequest("", user.password, newpwd)
-	_, err := conn.PasswordModify(passwordModifyRequest)
-
+	passwordModifyRequest := ldap.NewPasswordModifyRequest("", user.password, user.newPassword)
+	_, err = conn.PasswordModify(passwordModifyRequest)
 	if err != nil {
 		return err
 	}
@@ -44,19 +47,33 @@ func (l *ldapConfig) ChangePassword(conn *ldap.Conn, user *userConfig, newpwd st
 	return nil
 }
 
+func login(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("method:", r.Method)
+	if r.Method == "POST" {
+		r.ParseForm()
+
+		username := r.Form.Get("username")
+		password := r.Form.Get("username")
+		newPassword := r.Form.Get("username")
+		confirmPassword := r.Form.Get("username")
+
+		if newPassword == confirmPassword {
+			user := &userConfig{username, password, newPassword, confirmPassword}
+			changeLdapPassword(user)
+		}
+	}
+
+	templ := template.Must(template.ParseFiles(filepath.Join("templates", "index.html")))
+	templ.Execute(w, nil)
+}
+
 func main() {
 
-    user := &userConfig{"eder", "EderBaitola"}
-    l := &ldapConfig{"base_dn", 389, "127.0.0.1"}
+	http.HandleFunc("/", login)
 
-	conn, err := l.Bind(user)
-	if err != nil {
-		log.Fatal(err)
+    http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal("ListenAnsServe:", err)
 	}
-
-	err = l.ChangePassword(conn, user, "xuxa")
-	if err != nil {
-		log.Fatal(err)
-	}
-	conn.Close()
 }
