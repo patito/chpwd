@@ -47,7 +47,7 @@ func changeLdapPassword(user *userConfig) error {
 	return nil
 }
 
-func login(w http.ResponseWriter, r *http.Request) error {
+func login(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("method:", r.Method)
 	if r.Method == "POST" {
@@ -62,7 +62,7 @@ func login(w http.ResponseWriter, r *http.Request) error {
 			user := &userConfig{username, password, newPassword, confirmPassword}
 			err := changeLdapPassword(user)
 			if err != nil {
-				return err
+				log.Fatal("error")
 			}
 		}
 	}
