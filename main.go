@@ -31,12 +31,12 @@ func changeLdapPassword(user *userConfig) error {
 	if err != nil {
 		return err
 	}
+	defer conn.Close()
 
 	err = conn.Bind(l.baseDN, user.password)
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
 
 	passwordModifyRequest := ldap.NewPasswordModifyRequest("", user.password, user.newPassword)
 	_, err = conn.PasswordModify(passwordModifyRequest)
@@ -47,7 +47,7 @@ func changeLdapPassword(user *userConfig) error {
 	return nil
 }
 
-func login(w http.ResponseWriter, r *http.Request) {
+func login(w http.ResponseWriter, r *http.Request) error {
 
 	fmt.Println("method:", r.Method)
 	if r.Method == "POST" {
@@ -60,7 +60,10 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 		if newPassword == confirmPassword {
 			user := &userConfig{username, password, newPassword, confirmPassword}
-			changeLdapPassword(user)
+			err := changeLdapPassword(user)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
